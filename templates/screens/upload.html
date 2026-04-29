@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% from 'components/upload_zone.html' import upload_zone %}
+
+{% block title %}DocForge — Detect Document Forgery{% endblock %}
+
+{% block screen_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/screens/upload.css') }}" />
+{% endblock %}
+
+{% block body_class %}page-wrapper{% endblock %}
+
+{% block content %}
+<div class="upload-screen">
+
+    <!-- Hero heading -->
+    <div class="upload-screen__hero">
+        <h1 class="upload-screen__heading">Detect Document Forgery Instantly</h1>
+        <p class="upload-screen__subtext">
+            Upload a document image or PDF. Our AI analyses it for tampering in seconds.
+        </p>
+    </div>
+
+    <!-- Upload card -->
+    <div class="upload-screen__card">
+
+        <!-- DropZone -->
+        {{ upload_zone() }}
+
+        <!-- FileChip (hidden until file selected) -->
+        <div id="file-chip" class="file-chip hidden" aria-live="polite">
+            <svg class="file-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span id="chip-name" class="file-chip__name">filename.pdf</span>
+            <span id="chip-size" class="file-chip__size">—</span>
+            <button id="chip-clear" class="file-chip__clear" type="button" aria-label="Remove selected file">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- ValidationToast -->
+        <div id="validation-toast" class="toast toast--error" role="alert" aria-live="assertive">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span id="toast-message"></span>
+        </div>
+
+        <!-- Analyse button -->
+        <button id="analyse-btn" class="btn-primary btn-primary--disabled" type="button" disabled
+            aria-label="Analyse the selected document">
+            Analyse Document
+        </button>
+
+        <!-- Format caption -->
+        <p class="format-caption">
+            Secure · No data stored beyond your session · Free
+        </p>
+    </div>
+
+    <!-- Stats row -->
+    <div class="upload-screen__stats" aria-label="Platform statistics">
+        <div class="upload-screen__stat">
+            <div class="upload-screen__stat-value">200+</div>
+            <div class="upload-screen__stat-label">Documents Analysed</div>
+        </div>
+        <div class="upload-screen__stat">
+            <div class="upload-screen__stat-value">98.2%</div>
+            <div class="upload-screen__stat-label">Uptime</div>
+        </div>
+        <div class="upload-screen__stat">
+            <div class="upload-screen__stat-value">&lt;10s</div>
+            <div class="upload-screen__stat-label">Avg. Analysis Time</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Site footer -->
+<footer class="site-footer">
+    DocForge v1.0 · MCA Major Project 2024–25 · Results are indicative, not legally admissible.
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}" defer></script>
+{% endblock %}

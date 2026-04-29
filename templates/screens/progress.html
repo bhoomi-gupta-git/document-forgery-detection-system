@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% from 'components/progress_ring.html' import progress_ring, stage_bar %}
+
+{% block title %}DocForge — Analysing…{% endblock %}
+
+{% block screen_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/screens/progress.css') }}" />
+{% endblock %}
+
+{% block body_class %}page-wrapper{% endblock %}
+
+{% block content %}
+<div class="progress-screen">
+    <div id="status-card" class="status-card" role="main" aria-live="polite">
+
+        <!-- Animated ring -->
+        {{ progress_ring(size=72) }}
+
+        <!-- Dynamic title -->
+        <div class="status-card__title">Analysing…</div>
+
+        <!-- Current stage text -->
+        <div id="stage-label" class="status-card__stage-label">
+            Resizing and denoising image…
+        </div>
+
+        <!-- Stage stepper -->
+        {{ stage_bar() }}
+
+        <!-- Timer note -->
+        <div class="status-card__timer">Analysis typically takes 5–10 seconds</div>
+
+        <!-- Timeout warning (hidden until 12s) -->
+        <div id="timeout-warning" class="status-card__timeout" role="status">
+            This is taking longer than expected. Please wait…
+        </div>
+
+        <!-- Cancel link -->
+        <button id="cancel-btn" class="status-card__cancel" type="button">
+            Cancel and return to upload
+        </button>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/progress.js') }}" defer></script>
+{% endblock %}

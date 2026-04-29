@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% from 'components/verdict_banner.html' import verdict_banner %}
+{% from 'components/action_bar.html' import action_bar %}
+
+{% block title %}DocForge — Saved Result{% endblock %}
+{% set active_link = 'history' %}
+
+{% block screen_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/screens/detail.css') }}" />
+{% endblock %}
+
+{% block body_class %}page-wrapper page-wrapper--with-actionbar{% endblock %}
+
+{% block content %}
+<div class="detail-screen container">
+
+    <!-- Breadcrumb bar -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/history" class="breadcrumb__link" id="back-to-history">← History</a>
+        <span class="breadcrumb__sep" aria-hidden="true">/</span>
+        <span class="breadcrumb__current">{{ filename_orig or doc_id }}</span>
+    </nav>
+
+    <!-- Verdict banner (with SavedLabel chip) -->
+    {{ verdict_banner(verdict=verdict, confidence_pct=confidence_pct, saved_label=True) }}
+
+    <!-- Image comparison (read-only — no lightbox click label needed but still enabled) -->
+    <div class="img-comparison" aria-label="Document comparison">
+        <div class="img-comparison__panel" {% if original_url %}data-lightbox="{{ original_url }}" {% endif %}
+            role="button" tabindex="0" aria-label="View original image full size">
+            <img src="{{ original_url }}" alt="Original uploaded document" loading="lazy" />
+            <div class="img-comparison__caption">Original Upload</div>
+        </div>
+
+        <div id="annotated-panel" class="img-comparison__panel" {% if annotated_url
+            %}data-lightbox="{{ annotated_url }}" {% endif %} role="button" tabindex="0"
+            aria-label="View detected regions full size">
+            {% if annotated_url %}
+            <img src="{{ annotated_url }}" alt="Document with detected regions" loading="lazy" />
+            {% else %}
+            <div class="img-comparison__placeholder">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    aria-hidden="true" style="color:var(--rule)">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                </svg>
+                <span class="text-xs text-muted">Overlay image unavailable</span>
+            </div>
+            {% endif %}
+            <div class="img-comparison__caption">Detected Regions</div>
+        </div>
+    </div>
+
+    <!-- Forgery breakdown (read-only) -->
+    <div class="forgery-list" role="region" aria-label="Forgery analysis breakdown">
+        <div class="forgery-list__header">Forgery Analysis Breakdown</div>
+
+        {% if detections %}
+        {% for det in detections %}
+        <div class="forgery-list__row">
+            <svg class="forgery-list__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                aria-hidden="true">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <div class="forgery-list__info">
+                <div class="forgery-list__type">{{ det.type | replace('_', ' ') | title }}</div>
+                {% if det.description %}
+                <div class="forgery-list__desc">{{ det.description }}</div>
+                {% endif %}
+            </div>
+            {% set conf_pct = (det.confidence * 100) | int %}
+            {% if conf_pct >= 80 %}
+            <span class="badge badge--red badge--md">{{ conf_pct }}% conf</span>
+            {% elif conf_pct >= 60 %}
+            <span class="badge badge--amber badge--md">{{ conf_pct }}% conf</span>
+            {% else %}
+            <span class="badge badge--neutral badge--md">{{ conf_pct }}% conf</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="forgery-list__empty" role="status">
+            ✓ No copy-paste tampering detected · Typography consistency: PASS
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Meta footer -->
+    <div class="meta-footer" aria-label="Analysis metadata">
+        {% if filename_orig %}
+        <span class="meta-footer__item font-mono">{{ filename_orig }}</span>
+        {% endif %}
+        {% if analysed_at %}
+        <span class="meta-footer__item">
+            Analysed on {{ analysed_at[:10] }}
+        </span>
+        {% endif %}
+        {% if processing_ms %}
+        <span class="meta-footer__item">
+            Analysis: {{ "%.1f" | format(processing_ms / 1000) }}s
+        </span>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block action_bar %}
+{{ action_bar(
+primary_label='← Back to History',
+primary_href='/history',
+secondary_label='Analyse New Document',
+secondary_href='/'
+) }}
+{% endblock %}
+
+{% block lightbox %}
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <img id="lightbox-img" class="lightbox__img" src="" alt="Full size document view" />
+    <button id="lightbox-close" class="lightbox__close" type="button" aria-label="Close image viewer">
+        ✕
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/results.js') }}" defer></script>
+<script>
+    // Restore S-04 scroll on breadcrumb back click
+    document.getElementById('back-to-history')?.addEventListener('click', function () {
+        // scroll position is restored by history.js on load
+    });
+</script>
+{% endblock %}

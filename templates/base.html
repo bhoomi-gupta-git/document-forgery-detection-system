@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="DocForge — AI-powered document forgery detection" />
+    <title>{% block title %}DocForge{% endblock %}</title>
+
+    <!-- Base styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}" />
+
+    <!-- Per-screen stylesheet override -->
+    {% block screen_css %}{% endblock %}
+
+    <!-- Favicon (inline SVG data URI) -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%233B6FFF'/><text x='16' y='22' text-anchor='middle' font-size='18' font-family='Inter,sans-serif' fill='white' font-weight='700'>D</text></svg>" />
+</head>
+
+<body>
+
+    <!-- ── NavBar ─────────────────────────────────────────────── -->
+    {% from 'components/navbar.html' import navbar %}
+    {{ navbar(active_link=active_link | default(None)) }}
+
+    <!-- ── Offline toast ──────────────────────────────────────── -->
+    <div id="offline-toast" class="offline-toast" role="status" aria-live="polite">
+        You appear to be offline. Restore your connection and try again.
+    </div>
+
+    <!-- ── Main content ───────────────────────────────────────── -->
+    <main class="{% block body_class %}page-wrapper{% endblock %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ── ActionBar slot ─────────────────────────────────────── -->
+    {% block action_bar %}{% endblock %}
+
+    <!-- ── Lightbox (shared, used by results + detail) ────────── -->
+    {% block lightbox %}{% endblock %}
+
+    <!-- ── Scripts ────────────────────────────────────────────── -->
+    <script src="{{ url_for('static', filename='js/utils.js') }}" defer></script>
+    {% block scripts %}{% endblock %}
+
+</body>
+
+</html>

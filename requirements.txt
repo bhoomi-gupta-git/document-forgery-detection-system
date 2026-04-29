@@ -1,0 +1,13 @@
+flask>=3.0
+opencv-python>=4.9.0.80
+tensorflow-cpu>=2.15
+pytesseract>=0.3.10
+scikit-learn>=1.4
+numpy>=1.26
+pandas>=2.2
+matplotlib>=3.8
+python-magic>=0.4.27
+Pillow>=10.0
+pdf2image>=1.17
+werkzeug>=3.0
+gunicorn>=22.0

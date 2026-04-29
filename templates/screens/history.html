@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}DocForge — Analysis History{% endblock %}
+{% set active_link = 'history' %}
+
+{% block screen_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/screens/history.css') }}" />
+{% endblock %}
+
+{% block body_class %}page-wrapper{% endblock %}
+
+{% block content %}
+<div class="history-screen container container--wide">
+
+    <!-- Page header -->
+    <div class="page-header">
+        <h1 class="page-header__title">
+            Analysis History
+            <span id="record-count" class="page-header__count">—</span>
+        </h1>
+        <a href="/" class="btn-secondary">+ Analyse New</a>
+    </div>
+
+    <!-- Toolbar: search + filters -->
+    <div class="toolbar">
+        <!-- Search -->
+        <div class="search-input">
+            <svg class="search-input__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                aria-hidden="true">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input id="search-input" class="search-input__field" type="search" placeholder="Search by filename…"
+                aria-label="Search records by filename" autocomplete="off" />
+            <button id="search-clear" class="search-input__clear" type="button" aria-label="Clear search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Filter pills -->
+        <div class="filter-pills" role="group" aria-label="Filter by verdict">
+            <button class="filter-pills__pill filter-pills__pill--active" data-verdict="all" type="button">All</button>
+            <button class="filter-pills__pill" data-verdict="authentic" type="button">Authentic</button>
+            <button class="filter-pills__pill" data-verdict="forged" type="button">Potentially Forged</button>
+        </div>
+    </div>
+
+    <!-- Table wrapper -->
+    <div id="table-wrapper" class="history-table-wrapper">
+        <table class="record-table" role="grid" aria-label="Analysis history">
+            <thead>
+                <tr>
+                    <th scope="col" style="width:48px">#</th>
+                    <th scope="col" data-sort="filename">
+                        Filename <span class="sort-arrow">↕</span>
+                    </th>
+                    <th scope="col" data-sort="date" class="sort--active">
+                        Date &amp; Time <span class="sort-arrow">↓</span>
+                    </th>
+                    <th scope="col" data-sort="verdict">
+                        Verdict <span class="sort-arrow">↕</span>
+                    </th>
+                    <th scope="col" data-sort="confidence">
+                        Confidence <span class="sort-arrow">↕</span>
+                    </th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody id="history-tbody">
+                <!-- Populated by history.js -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" aria-label="Pagination">
+        <div class="pagination__info" id="page-info">Page 1 of 1</div>
+        <div class="pagination__controls">
+            <button id="page-prev" class="pagination__btn" type="button" disabled aria-label="Previous page">←
+                Prev</button>
+            <button id="page-next" class="pagination__btn" type="button" disabled aria-label="Next page">Next →</button>
+        </div>
+    </div>
+
+    <!-- Empty state (hidden by default) -->
+    <div id="empty-state" class="empty-state hidden" role="status" aria-live="polite">
+        <svg class="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+            aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+        </svg>
+        <div class="empty-state__title">No records found</div>
+        <p id="empty-message" class="empty-state__body">
+            No analyses yet. Upload your first document.
+        </p>
+        <a href="/" class="btn-secondary" style="margin-top:var(--sp-2)">
+            Upload a Document
+        </a>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/history.js') }}" defer></script>
+{% endblock %}
