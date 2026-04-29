@@ -1,10 +1,30 @@
+# Python
 __pycache__/
 *.pyc
+
+# Virtual environment
 venv/
 .env
 
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+
+# Runtime data
 uploads/
 results/
 models/
 
-.DS_Store
+# Database & logs
+*.db
+*.log
+
+# Temp files
+*.tmp
+*.temp
+
+# ML model files
+*.h5
+*.keras
