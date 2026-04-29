@@ -48,10 +48,10 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- ── Indexes ───────────────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_documents_uploaded_at
-    ON documents (uploaded_at DESC);                    -- history dashboard ordering
+    ON documents (uploaded_at DESC);                    
 
 CREATE INDEX IF NOT EXISTS idx_results_document_id
-    ON analysis_results (document_id);                  -- FK join performance
+    ON analysis_results (document_id);                 
 
 CREATE INDEX IF NOT EXISTS idx_results_verdict
-    ON analysis_results (verdict);                      -- future verdict filtering
+    ON analysis_results (verdict);                      
