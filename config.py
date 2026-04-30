@@ -1,5 +1,6 @@
 import os
 import shutil
+import logging
 
 # ── Base Directories ───────────────────────────────────────────────
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -9,6 +10,10 @@ RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 MODELS_DIR  = os.path.join(BASE_DIR, 'models')
 DB_DIR      = os.path.join(BASE_DIR, 'db')
 LOG_DIR     = BASE_DIR
+
+# ── Environment ────────────────────────────────────────────────────
+ENV   = os.environ.get("APP_ENV", "development")  # development | production
+DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 # ── Database ───────────────────────────────────────────────────────
 DB_PATH     = os.path.join(BASE_DIR, 'docforge.db')
@@ -33,32 +38,43 @@ ELA_QUALITY = 90
 ELA_AMPLIFY = 20
 PDF_DPI     = 200
 
-# ── ML / Aggregator Thresholds ─────────────────────────────────────
-VERDICT_THRESHOLD = 0.5
+# ── ML / Aggregator Configuration ──────────────────────────────────
+MODEL_CONFIG = {
+    "threshold": 0.5,
+    "weights": {
+        "cnn": 0.60,
+        "ela": 0.25,
+        "ocr": 0.15,
+    }
+}
 
-WEIGHT_CNN = 0.60
-WEIGHT_ELA = 0.25
-WEIGHT_OCR = 0.15
+# Backward compatibility (so your existing code doesn't break)
+VERDICT_THRESHOLD = MODEL_CONFIG["threshold"]
+WEIGHT_CNN = MODEL_CONFIG["weights"]["cnn"]
+WEIGHT_ELA = MODEL_CONFIG["weights"]["ela"]
+WEIGHT_OCR = MODEL_CONFIG["weights"]["ocr"]
 
-MODEL_PATH    = os.path.join(MODELS_DIR, 'forgery_model.h5')
-MODEL_VERSION = '1.0.0'
+# ── Model ──────────────────────────────────────────────────────────
+MODEL_PATH       = os.path.join(MODELS_DIR, 'forgery_model.h5')
+MODEL_VERSION    = '1.0.0'
+ALLOW_MOCK_MODEL = True   # if False → fail when model missing
 
 # ── OCR (Cross-platform safe) ──────────────────────────────────────
-TESSERACT_CMD = shutil.which("tesseract")
+logger = logging.getLogger(__name__)
 
+TESSERACT_CMD = shutil.which("tesseract")
 if not TESSERACT_CMD:
-    print("⚠ WARNING: Tesseract not found → OCR will be disabled")
+    logger.warning("Tesseract not found → OCR will be disabled")
 
 OCR_MIN_CONFIDENCE = 60
 
 # ── PDF (Poppler detection) ────────────────────────────────────────
 POPPLER_PATH = shutil.which("pdftoppm")
-
 if not POPPLER_PATH:
-    print("⚠ WARNING: Poppler not found → PDF support disabled")
+    logger.warning("Poppler not found → PDF support disabled")
 
 # ── Analysis Timeout ───────────────────────────────────────────────
-ANALYSIS_TIMEOUT_S = 15
+ANALYSIS_TIMEOUT_S = 15   # NOTE: must be enforced in backend, not just config
 
 # ── Pagination ─────────────────────────────────────────────────────
 HISTORY_PAGE_LIMIT     = 10
@@ -71,7 +87,6 @@ LOG_BACKUP_COUNT = 3
 
 # ── Flask ──────────────────────────────────────────────────────────
 SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-change-in-prod')
-DEBUG      = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 # ── Ensure runtime directories exist ───────────────────────────────
 for _dir in (UPLOAD_DIR, RESULTS_DIR, MODELS_DIR):
