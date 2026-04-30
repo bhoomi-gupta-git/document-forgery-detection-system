@@ -1,0 +1,9 @@
+/* static/css/screens/detail.css — S-05 Saved Result Detail */
+
+.detail-screen {
+    padding: var(--sp-4) var(--sp-3);
+}
+
+.detail-screen .breadcrumb {
+    margin-bottom: var(--sp-3);
+}

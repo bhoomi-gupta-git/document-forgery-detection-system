@@ -1,0 +1,24 @@
+{% macro upload_zone(label='Drop your document here or click to browse',
+accepted_types='JPG, PNG, PDF',
+max_size_mb=10) %}
+<div id="drop-zone" class="drop-zone" role="button" tabindex="0" aria-label="File upload area — {{ label }}">
+
+    <!-- Hidden native file input sits over the entire zone -->
+    <input type="file" id="file-input" class="drop-zone__input"
+        accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" aria-hidden="true" tabindex="-1" />
+
+    <!-- Upload icon -->
+    <svg class="drop-zone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+
+    <span class="drop-zone__label">{{ label }}</span>
+    <span class="text-xs text-muted">
+        Supported: {{ accepted_types }} &nbsp;·&nbsp; max {{ max_size_mb }} MB
+    </span>
+
+</div>
+{% endmacro %}

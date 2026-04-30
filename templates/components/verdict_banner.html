@@ -1,0 +1,54 @@
+{% macro verdict_banner(verdict, confidence_pct, saved_label=False) %}
+
+{# Resolve modifier, icon, title, subtitle from verdict value #}
+{% if verdict == 'authentic' %}
+{% set modifier = 'authentic' %}
+{% set icon_path = 'M20 6L9 17l-5-5' %}
+{% set title_text = 'Authentic' %}
+{% set subtitle = 'No significant forgery indicators detected in this document.' %}
+{% elif verdict == 'forged' %}
+{% set modifier = 'forged' %}
+{% set icon_path = 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12
+17h.01' %}
+{% set title_text = 'Potentially Forged' %}
+{% set subtitle = 'Suspicious regions detected. Review the breakdown below.' %}
+{% else %}
+{% set modifier = 'unknown' %}
+{% set icon_path = 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 8v4M12 16h.01' %}
+{% set title_text = 'Inconclusive' %}
+{% set subtitle = 'Analysis confidence is low. Consider uploading a higher-quality scan.' %}
+{% endif %}
+
+<div class="verdict-banner verdict-banner--{{ modifier }}" role="region"
+    aria-label="Analysis verdict: {{ title_text }}">
+
+    <div class="verdict-banner__left">
+        <!-- Icon + title -->
+        <div class="verdict-banner__title">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="{{ icon_path }}" />
+            </svg>
+            {{ title_text }}
+        </div>
+
+        <!-- Subtitle -->
+        <div class="verdict-banner__subtitle">{{ subtitle }}</div>
+
+        <!-- Saved label chip (S-05 only) -->
+        {% if saved_label %}
+        <span class="verdict-banner__saved-chip" role="note">
+            ⬡ Saved result — not re-analysed
+        </span>
+        {% endif %}
+    </div>
+
+    <!-- Confidence score -->
+    <div class="verdict-banner__right">
+        <div class="verdict-banner__confidence" aria-label="{{ confidence_pct }} percent confidence">
+            {{ confidence_pct }}% Confidence
+        </div>
+    </div>
+
+</div>
+{% endmacro %}

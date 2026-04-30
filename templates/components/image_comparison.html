@@ -1,0 +1,110 @@
+{#
+image_comparison.html — ImageComparison Jinja2 macro
+DocForge Frontend Component Library · v1.0
+
+Usage:
+{% from "components/image_comparison.html" import image_comparison %}
+{{ image_comparison(
+original_url="/uploads/abc.jpg",
+overlay_url="/results/abc_annotated.jpg",
+lightbox_enabled=True,
+read_only=False
+) }}
+
+Props:
+original_url str — URL of the original uploaded image (required)
+overlay_url str — URL of the annotated heatmap image (None = missing)
+lightbox_enabled bool — whether clicking opens lightbox (default True)
+read_only bool — disables lightbox interactivity hint (default False, set True for S-05)
+#}
+
+{% macro image_comparison(original_url, overlay_url=None, lightbox_enabled=True, read_only=False) %}
+
+{# ── lightbox markup ───────────────────────────────────────────── #}
+{% if lightbox_enabled %}
+<div class="img-lightbox" id="img-lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" hidden>
+    <div class="img-lightbox__backdrop" data-lightbox-close aria-hidden="true"></div>
+    <div class="img-lightbox__inner">
+        <button class="img-lightbox__close" data-lightbox-close aria-label="Close image viewer" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" width="20" height="20" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+        <img class="img-lightbox__image" id="img-lightbox-src" src="" alt="Full-size document view">
+        <p class="img-lightbox__caption" id="img-lightbox-caption"></p>
+    </div>
+</div>
+{% endif %}
+
+{# ── main comparison grid ──────────────────────────────────────── #}
+<div class="img-comparison" role="group" aria-label="Document image comparison">
+
+    {# Left panel — original #}
+    <figure class="img-comparison__panel img-comparison__panel--original">
+        {% if lightbox_enabled and not read_only %}
+        <button class="img-comparison__trigger" type="button" aria-label="View original document at full size"
+            data-lightbox-src="{{ original_url }}" data-lightbox-caption="Original Upload">
+            {% endif %}
+            <img class="img-comparison__image" src="{{ original_url }}" alt="Original uploaded document" loading="lazy">
+            {% if lightbox_enabled and not read_only %}
+            <span class="img-comparison__expand-hint" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" width="16" height="16">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+                Click to expand
+            </span>
+            {% endif %}
+            {% if lightbox_enabled and not read_only %}
+        </button>
+        {% endif %}
+        <figcaption class="img-comparison__caption">Original Upload</figcaption>
+    </figure>
+
+    {# Right panel — annotated overlay or placeholder #}
+    <figure class="img-comparison__panel img-comparison__panel--overlay">
+        {% if overlay_url %}
+        {% if lightbox_enabled and not read_only %}
+        <button class="img-comparison__trigger" type="button" aria-label="View annotated heatmap at full size"
+            data-lightbox-src="{{ overlay_url }}" data-lightbox-caption="Detected Regions — Heatmap overlay">
+            {% endif %}
+            <img class="img-comparison__image" src="{{ overlay_url }}" alt="Annotated heatmap showing detected regions"
+                loading="lazy">
+            {% if lightbox_enabled and not read_only %}
+            <span class="img-comparison__expand-hint" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" width="16" height="16">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+                Click to expand
+            </span>
+            {% endif %}
+            {% if lightbox_enabled and not read_only %}
+        </button>
+        {% endif %}
+        <figcaption class="img-comparison__caption">Detected Regions</figcaption>
+
+        {% else %}
+        {# Overlay missing — show placeholder with retry icon #}
+        <div class="img-comparison__missing" role="img" aria-label="Overlay image unavailable">
+            <img src="{{ url_for('static', filename='img/icons/eye-off.svg') }}" alt="" aria-hidden="true"
+                class="img-comparison__missing-icon" width="32" height="32">
+            <p class="img-comparison__missing-label">Overlay image unavailable</p>
+            <button class="img-comparison__missing-retry" type="button" onclick="window.location.reload()"
+                aria-label="Retry loading overlay image">
+                <img src="{{ url_for('static', filename='img/icons/refresh.svg') }}" alt="" aria-hidden="true"
+                    width="14" height="14">
+                Retry
+            </button>
+        </div>
+        <figcaption class="img-comparison__caption img-comparison__caption--muted">
+            No Regions Flagged
+        </figcaption>
+        {% endif %}
+    </figure>
+
+</div>{# /.img-comparison #}
+
+{% endmacro %}

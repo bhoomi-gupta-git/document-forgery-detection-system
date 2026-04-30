@@ -1,0 +1,131 @@
+{#
+progress_ring.html — ProgressRing + StageBar Jinja2 macros
+DocForge Frontend Component Library · v1.0
+
+Macros exported:
+progress_ring(size, stroke_width, color)
+stage_indicator(stages, current, completed)
+status_card(stage_label, timer_note, show_timeout, cancel_href)
+
+Usage (typical — S-02 screen):
+{% from "components/progress_ring.html" import status_card %}
+{{ status_card(
+stage_label="Running forgery detection model…",
+timer_note="Analysis typically takes 5–10 seconds",
+show_timeout=False,
+cancel_href="/"
+) }}
+#}
+
+{# ── ProgressRing ─────────────────────────────────────────────── #}
+{% macro progress_ring(size=72, stroke_width=4, color="var(--accent)") %}
+{% set r = (size / 2) - stroke_width %}
+{% set circ = (2 * 3.14159 * r) | round(2) %}
+<svg class="progress-ring" width="{{ size }}" height="{{ size }}" viewBox="0 0 {{ size }} {{ size }}" aria-hidden="true"
+    focusable="false">
+    {# Track circle #}
+    <circle class="progress-ring__track" cx="{{ size / 2 }}" cy="{{ size / 2 }}" r="{{ r }}" fill="none"
+        stroke="var(--rule)" stroke-width="{{ stroke_width }}" />
+    {# Animated arc — indeterminate spin via CSS #}
+    <circle class="progress-ring__circle" cx="{{ size / 2 }}" cy="{{ size / 2 }}" r="{{ r }}" fill="none"
+        stroke="{{ color }}" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-dasharray="{{ circ }}"
+        stroke-dashoffset="{{ (circ * 0.75) | round(2) }}" transform="rotate(-90 {{ size / 2 }} {{ size / 2 }})" />
+</svg>
+{% endmacro %}
+
+
+{# ── StageIndicator ───────────────────────────────────────────── #}
+{%
+macro stage_indicator(
+stages=["Preprocessing", "Detection", "Highlighting", "Saving"],
+current=0,
+completed=[]
+)
+%}
+<nav class="stage-bar" aria-label="Analysis progress" role="navigation">
+    {% for stage in stages %}
+    {% set idx = loop.index0 %}
+    {% set is_complete = idx in completed %}
+    {% set is_active = idx == current and idx not in completed %}
+    {% set is_pending = idx > current and idx not in completed %}
+
+    <div class="stage-bar__step">
+        {# Connector line (before all but first dot) #}
+        {% if not loop.first %}
+        <div class="stage-bar__line
+          {%- if idx <= current or idx in completed %} stage-bar__line--done{% endif %}">
+        </div>
+        {% endif %}
+
+        {# Dot #}
+        <div class="stage-bar__dot
+          {%- if is_complete %} stage-bar__dot--complete
+          {%- elif is_active %} stage-bar__dot--active
+          {%- else %} stage-bar__dot--pending{% endif %}"
+            aria-label="{{ stage }}{% if is_complete %} — complete{% elif is_active %} — in progress{% else %} — pending{% endif %}"
+            role="listitem">
+            {% if is_complete %}
+            {# Checkmark #}
+            <svg viewBox="0 0 12 12" fill="none" width="10" height="10" aria-hidden="true">
+                <polyline points="2,6 5,9 10,3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+            {% else %}
+            <span class="stage-bar__dot-inner"></span>
+            {% endif %}
+        </div>
+
+        {# Label #}
+        <span class="stage-bar__label
+        {%- if is_active %} stage-bar__label--active{% endif %}
+        {%- if is_complete %} stage-bar__label--done{% endif %}
+        {%- if is_pending %} stage-bar__label--pending{% endif %}">{{ stage }}</span>
+    </div>
+    {% endfor %}
+</nav>
+{% endmacro %}
+
+
+{# ── StatusCard (full S-02 card) ──────────────────────────────── #}
+{%
+macro status_card(
+stage_label="Analysing document…",
+timer_note="Analysis typically takes 5–10 seconds",
+show_timeout=False,
+cancel_href="/",
+current_stage=0,
+completed_stages=[]
+)
+%}
+<div class="status-card" role="main" aria-live="polite" aria-atomic="false">
+
+    {# Animated ring #}
+    <div class="status-card__ring-wrap">
+        {{ progress_ring(size=72, stroke_width=4) }}
+    </div>
+
+    {# Dynamic stage label #}
+    <p class="status-card__stage-label" id="stage-label" aria-live="polite">
+        {{ stage_label }}
+    </p>
+
+    {# Stage stepper #}
+    {{ stage_indicator(current=current_stage, completed=completed_stages) }}
+
+    {# Timer note #}
+    <p class="status-card__timer-note">{{ timer_note }}</p>
+
+    {# Timeout warning — shown after 12 s via JS adding .is-visible #}
+    <div class="status-card__timeout{% if show_timeout %} status-card__timeout--visible{% endif %}" id="timeout-warning"
+        role="alert" aria-live="assertive">
+        <img src="{{ url_for('static', filename='img/icons/alert-triangle.svg') }}" alt="" aria-hidden="true" width="14"
+            height="14">
+        This is taking longer than expected. Please wait…
+    </div>
+
+    {# Cancel link #}
+    <a href="{{ cancel_href }}" class="status-card__cancel" id="cancel-link" data-cancel-analysis
+        aria-label="Cancel analysis and return to upload">Cancel and return to upload</a>
+
+</div>{# /.status-card #}
+{% endmacro %}

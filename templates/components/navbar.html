@@ -1,0 +1,24 @@
+{% macro navbar(active_link=None) %}
+<nav class="navbar" role="navigation" aria-label="Main navigation">
+
+    <!-- Logo / wordmark -->
+    <a href="/" class="navbar__logo" aria-label="DocForge home">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true">
+            <rect width="32" height="32" rx="6" fill="var(--accent)" />
+            <path d="M9 8h7a7 7 0 0 1 0 14H9V8z" fill="white" />
+            <circle cx="23" cy="22" r="3" fill="white" opacity=".6" />
+        </svg>
+        <span>DocForge</span>
+    </a>
+
+    <!-- Nav links -->
+    <div class="navbar__nav">
+        <a href="/history" class="navbar__link {% if active_link == 'history' %}navbar__link--active{% endif %}" {% if
+            active_link=='history' %}aria-current="page" {% endif %}>
+            History
+        </a>
+    </div>
+
+</nav>
+{% endmacro %}

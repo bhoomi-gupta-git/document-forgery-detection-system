@@ -1,0 +1,75 @@
+/* static/css/screens/upload.css — S-01 Home / Upload Screen */
+
+.upload-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - var(--navbar-height));
+    padding: var(--sp-4) var(--sp-3);
+    background: var(--white);
+}
+
+.upload-screen__hero {
+    text-align: center;
+    margin-bottom: var(--sp-4);
+    max-width: 560px;
+}
+
+.upload-screen__heading {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--ink);
+    line-height: var(--lh-tight);
+    margin-bottom: var(--sp-1);
+}
+
+.upload-screen__subtext {
+    font-size: var(--text-base);
+    color: var(--muted);
+}
+
+.upload-screen__card {
+    width: 100%;
+    max-width: var(--max-w-card);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+
+.upload-screen__stats {
+    display: flex;
+    justify-content: center;
+    gap: var(--sp-6);
+    margin-top: var(--sp-5);
+    padding-top: var(--sp-5);
+    border-top: 1px solid var(--rule);
+    flex-wrap: wrap;
+}
+
+.upload-screen__stat {
+    text-align: center;
+}
+
+.upload-screen__stat-value {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.upload-screen__stat-label {
+    font-size: var(--text-xs);
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+/* Tablet responsive */
+@media (max-width: 600px) {
+    .upload-screen__heading {
+        font-size: var(--text-xl);
+    }
+
+    .upload-screen__stats {
+        gap: var(--sp-4);
+    }
+}

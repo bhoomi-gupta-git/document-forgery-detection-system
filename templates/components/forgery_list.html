@@ -1,0 +1,98 @@
+{#
+forgery_list.html — ForgeryTypeList Jinja2 macro
+DocForge Frontend Component Library · v1.0
+
+Usage:
+{% from "components/forgery_list.html" import forgery_list %}
+{{ forgery_list(items=detections, empty_label="No forgery detected") }}
+
+items: list of dicts with keys:
+type — "copy_paste" | "ela_artifact" | "text_inconsistency" | "pattern_anomaly"
+location — human-readable location string, e.g. "Upper-right quadrant"
+confidence — float 0.0–1.0
+description — (optional) longer description shown in hover tooltip
+empty_label: string shown when items is empty or None
+#}
+
+{% macro forgery_list(items=[], empty_label="No forgery detected") %}
+
+{# ── helpers ───────────────────────────────────────────────────── #}
+{% set _type_meta = {
+"copy_paste": {"icon": "copy", "label": "Copy-paste Tampering"},
+"ela_artifact": {"icon": "image", "label": "JPEG / ELA Artifact"},
+"text_inconsistency":{"icon": "type", "label": "Text Inconsistency"},
+"pattern_anomaly": {"icon": "grid", "label": "Pattern Anomaly"}
+} %}
+
+{% macro _badge_class(conf) %}
+{%- if conf >= 0.8 -%}badge badge--green
+{%- elif conf >= 0.6 -%}badge badge--amber
+{%- else -%}badge badge--red{%- endif -%}
+{% endmacro %}
+
+{% macro _icon(name) %}
+<img src="{{ url_for('static', filename='img/icons/' ~ name ~ '.svg') }}" alt="" aria-hidden="true"
+    class="forgery-list__type-icon" width="16" height="16">
+{% endmacro %}
+
+{# ── component ─────────────────────────────────────────────────── #}
+<section class="forgery-list" aria-label="Forgery analysis breakdown">
+    <h2 class="forgery-list__heading">Forgery Analysis Breakdown</h2>
+
+    {% if items %}
+    <div class="forgery-list__table" role="table" aria-label="Detected forgery types">
+        {# Header row — visually present but accessible #}
+        <div class="forgery-list__row forgery-list__row--header" role="row">
+            <div class="forgery-list__cell forgery-list__cell--type" role="columnheader">Type</div>
+            <div class="forgery-list__cell forgery-list__cell--loc" role="columnheader">Location</div>
+            <div class="forgery-list__cell forgery-list__cell--conf" role="columnheader">Confidence</div>
+        </div>
+
+        {% for item in items %}
+        {% set meta = _type_meta.get(item.type, {"icon": "info", "label": item.type | replace("_", " ") | title}) %}
+        {% set conf = item.confidence if item.confidence is defined else 0.0 %}
+        {% set desc = item.description if item.description is defined else "" %}
+        <div class="forgery-list__row" role="row" {% if desc %} data-tooltip="{{ desc }}" tabindex="0"
+            aria-describedby="tip-{{ loop.index }}" {% endif %}>
+            {# Type cell #}
+            <div class="forgery-list__cell forgery-list__cell--type" role="cell">
+                <span class="forgery-list__type-wrap">
+                    {{ _icon(meta.icon) }}
+                    <span class="forgery-list__type-label">{{ meta.label }}</span>
+                </span>
+            </div>
+
+            {# Location cell #}
+            <div class="forgery-list__cell forgery-list__cell--loc" role="cell">
+                <span class="forgery-list__location">
+                    {{ item.location if item.location else "Document-wide" }}
+                </span>
+            </div>
+
+            {# Confidence badge cell #}
+            <div class="forgery-list__cell forgery-list__cell--conf" role="cell">
+                <span class="{{ _badge_class(conf) }}" aria-label="{{ (conf * 100) | int }}% confidence">
+                    {{ (conf * 100) | int }}%
+                </span>
+            </div>
+
+            {# Tooltip (hidden, shown on hover/focus via CSS+JS) #}
+            {% if desc %}
+            <div class="forgery-list__tooltip" role="tooltip" id="tip-{{ loop.index }}">
+                {{ desc }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    {# Empty / authentic state #}
+    <div class="forgery-list__empty">
+        <img src="{{ url_for('static', filename='img/icons/check-circle.svg') }}" alt="" aria-hidden="true"
+            class="forgery-list__empty-icon" width="24" height="24">
+        <span class="forgery-list__empty-label">{{ empty_label }}</span>
+    </div>
+    {% endif %}
+</section>
+{% endmacro %}

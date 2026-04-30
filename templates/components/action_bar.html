@@ -1,0 +1,16 @@
+{% macro action_bar(primary_label, primary_href,
+secondary_label=None, secondary_href=None) %}
+<footer class="action-bar" role="toolbar" aria-label="Page actions">
+
+    <a href="{{ primary_href }}" class="action-bar__primary">
+        {{ primary_label }}
+    </a>
+
+    {% if secondary_label and secondary_href %}
+    <a href="{{ secondary_href }}" class="action-bar__secondary">
+        {{ secondary_label }}
+    </a>
+    {% endif %}
+
+</footer>
+{% endmacro %}

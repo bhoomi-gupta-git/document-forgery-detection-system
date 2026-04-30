@@ -1,0 +1,35 @@
+/* static/css/screens/history.css — S-04 History Dashboard */
+
+.history-screen {
+    padding: var(--sp-4) var(--sp-3);
+}
+
+.history-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    background: var(--white);
+    margin-bottom: var(--sp-3);
+}
+
+/* Filename column — mono font */
+.record-table td:nth-child(2) {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Row number column — narrow */
+.record-table td:first-child,
+.record-table th:first-child {
+    width: 48px;
+    color: var(--muted);
+}
+
+/* Action column */
+.record-table td:last-child {
+    white-space: nowrap;
+}

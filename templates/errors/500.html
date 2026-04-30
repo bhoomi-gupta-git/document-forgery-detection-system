@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% from 'components/error_card.html' import error_card %}
+
+{% block title %}DocForge — Server Error{% endblock %}
+
+{% block screen_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/screens/errors.css') }}" />
+{% endblock %}
+
+{% block body_class %}page-wrapper{% endblock %}
+
+{% block content %}
+<div class="error-screen">
+    {{ error_card(
+    title = 'Something Went Wrong',
+    body = 'An unexpected error occurred on our end. Please try again.',
+    action_label = 'Retry',
+    action_href = '/',
+    severity = 'error'
+    ) }}
+</div>
+{% endblock %}

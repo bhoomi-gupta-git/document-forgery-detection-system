@@ -1,0 +1,36 @@
+/* static/css/screens/results.css — S-03 Results Screen */
+
+.results-screen {
+    padding: var(--sp-4) var(--sp-3);
+}
+
+/* Fade-in the verdict banner on load */
+.verdict-banner {
+    animation: banner-fade-in 400ms ease;
+}
+
+@keyframes banner-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Image panel hover zoom hint */
+.img-comparison__panel:hover::after {
+    content: '🔍 Click to expand';
+    position: absolute;
+    bottom: var(--sp-1);
+    right: var(--sp-1);
+    font-size: var(--text-xs);
+    background: rgba(15, 17, 23, 0.7);
+    color: var(--white);
+    padding: 2px 6px;
+    border-radius: var(--r-sm);
+    pointer-events: none;
+}

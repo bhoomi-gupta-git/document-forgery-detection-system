@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 36" fill="none">
+  <!-- Diamond shield icon -->
+  <g>
+    <path d="M8 4 L16 4 L20 8 L20 20 L14 28 L8 20 L8 4Z" fill="#3B6FFF" opacity="0.15"/>
+    <path d="M8 4 L16 4 L20 8 L20 20 L14 28 L8 20 L8 4Z" stroke="#3B6FFF" stroke-width="1.5" fill="none"/>
+    <path d="M11 13 L13.5 15.5 L18 10" stroke="#3B6FFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="26" y="23" font-family="'Georgia', 'Times New Roman', serif" font-size="18" font-weight="700" fill="#0F1117" letter-spacing="-0.5">Doc</text>
+  <text x="59" y="23" font-family="'Georgia', 'Times New Roman', serif" font-size="18" font-weight="700" fill="#3B6FFF" letter-spacing="-0.5">Forge</text>
+</svg>

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% from 'components/error_card.html' import error_card %}
+
+{% block title %}DocForge — Page Not Found{% endblock %}
+
+{% block screen_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/screens/errors.css') }}" />
+{% endblock %}
+
+{% block body_class %}page-wrapper{% endblock %}
+
+{% block content %}
+<div class="error-screen">
+    {{ error_card(
+    title = title | default('Page Not Found'),
+    body = message | default('The page you requested does not exist.'),
+    action_label = 'Go Home',
+    action_href = '/',
+    severity = 'error'
+    ) }}
+</div>
+{% endblock %}

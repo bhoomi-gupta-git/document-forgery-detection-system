@@ -1,0 +1,27 @@
+/* static/css/screens/progress.css — S-02 Analysis Progress */
+
+.progress-screen {
+    min-height: calc(100vh - var(--navbar-height));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--steel);
+    padding: var(--sp-4);
+}
+
+/* Fade-in animation for the status card */
+.status-card {
+    animation: card-fade-in 300ms ease;
+}
+
+@keyframes card-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
