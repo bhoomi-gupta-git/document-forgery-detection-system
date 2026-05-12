@@ -34,13 +34,13 @@ ALLOWED_MIME_TYPES = {
 MODEL_INPUT_SIZE = (224, 224)
 MIN_IMAGE_SIZE   = 100
 
-ELA_QUALITY = 90
-ELA_AMPLIFY = 20
+ELA_QUALITY = 75
+ELA_AMPLIFY = 10
 PDF_DPI     = 200
 
 # ── ML / Aggregator Configuration ──────────────────────────────────
 MODEL_CONFIG = {
-    "threshold": 0.5,
+    "threshold": 0.40,
     "weights": {
         "cnn": 0.60,
         "ela": 0.25,
@@ -60,18 +60,8 @@ MODEL_VERSION    = '1.0.0'
 ALLOW_MOCK_MODEL = True   # if False → fail when model missing
 
 # ── OCR (Cross-platform safe) ──────────────────────────────────────
-logger = logging.getLogger(__name__)
-
 TESSERACT_CMD = shutil.which("tesseract")
-if not TESSERACT_CMD:
-    logger.warning("Tesseract not found → OCR will be disabled")
-
-OCR_MIN_CONFIDENCE = 60
-
-# ── PDF (Poppler detection) ────────────────────────────────────────
 POPPLER_PATH = shutil.which("pdftoppm")
-if not POPPLER_PATH:
-    logger.warning("Poppler not found → PDF support disabled")
 
 # ── Analysis Timeout ───────────────────────────────────────────────
 ANALYSIS_TIMEOUT_S = 15   # NOTE: must be enforced in backend, not just config

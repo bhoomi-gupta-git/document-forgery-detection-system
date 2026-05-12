@@ -28,3 +28,9 @@ models/
 # ML model files
 *.h5
 *.keras
+
+# Datasets and training scripts
+dataset/
+training_dataset/
+training_logs/
+train_documents_only.py

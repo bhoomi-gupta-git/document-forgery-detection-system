@@ -2,12 +2,13 @@
 routes/history.py — History dashboard endpoints.
 
 Routes:
-    GET /api/history   — paginated JSON list of past analyses
-    GET /history       — serve history dashboard HTML (S-04)
-    GET /result/<id>/detail — serve saved result detail (S-05, from history)
+    GET /api/history            — paginated JSON list of past analyses
+    GET /history                — serve history dashboard HTML (S-04)
+    GET /result/<id>/detail     — serve saved result detail (S-05, from history)
 """
 
 import logging
+import os
 
 from flask import Blueprint, jsonify, render_template, request
 
@@ -29,11 +30,9 @@ def api_history():
         page    (int, default 1)
         limit   (int, default 10, max 100)
         verdict (str, optional: 'authentic' | 'forged')
-        sort    (str, default 'date': 'date' | 'filename' | 'verdict' | 'confidence')
-        dir     (str, default 'desc': 'asc' | 'desc')
+        sort    (str, default 'date')
+        dir     (str, default 'desc')
         q       (str, optional filename search)
-
-    Response: { page, limit, total, items: [...] }
     """
     page    = _safe_int(request.args.get('page'),  1,  min_val=1)
     limit   = _safe_int(request.args.get('limit'), config.HISTORY_PAGE_LIMIT, min_val=1)
@@ -42,7 +41,6 @@ def api_history():
     dir_    = request.args.get('dir',  'desc')
     search  = request.args.get('q') or None
 
-    # Sanitise verdict — only allow known values
     if verdict not in (None, 'authentic', 'forged'):
         verdict = None
 
@@ -59,7 +57,6 @@ def api_history():
         logger.error("History query failed: %s", exc)
         return jsonify({'error': 'Could not load history. Please try again.'}), 500
 
-    # Convert decimal confidence to integer percentage for each item
     for item in data.get('items', []):
         raw = item.get('confidence')
         item['confidence_pct'] = int(round((raw or 0.0) * 100))
@@ -93,8 +90,18 @@ def detail_screen(doc_id: str):
 
     annotated_image = result.get('annotated_image')
     annotated_url   = f"/results/{annotated_image}" if annotated_image else None
-    original_url    = f"/uploads/{result.get('filename_stored')}"
-    confidence_pct  = int(round((result.get('confidence') or 0.0) * 100))
+
+    # ── Original image URL (PDF-safe) ─────────────────────────────────────────
+    file_ext        = result.get('file_ext', '')
+    filename_stored = result.get('filename_stored', '')
+
+    if file_ext == 'pdf':
+        stem         = os.path.splitext(filename_stored)[0]
+        original_url = f"/results/{stem}_page1.jpg"
+    else:
+        original_url = f"/uploads/{filename_stored}"
+
+    confidence_pct = int(round((result.get('confidence') or 0.0) * 100))
 
     return render_template(
         'screens/detail.html',
@@ -108,7 +115,7 @@ def detail_screen(doc_id: str):
         uploaded_at    = result.get('uploaded_at', ''),
         analysed_at    = result.get('analysed_at', ''),
         processing_ms  = result.get('processing_ms'),
-        from_history   = True,    # S-05 — shows BreadcrumbBar + SavedLabel
+        from_history   = True,
     )
 
 
