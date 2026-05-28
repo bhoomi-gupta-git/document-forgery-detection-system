@@ -1,44 +1,47 @@
--- DocForge · Database Schema · v1.0
--- Single source of truth. Run once via db/adapter.py on startup.
--- Compatible with SQLite (V1) and PostgreSQL (V2 — change connection string only).
+-- DocForge · Database Schema · v1.1
+-- Updated for multi-page PDF support.
+-- New columns: total_pages, pages_summary, forged_pages
 
-PRAGMA journal_mode = WAL;   -- better concurrent read performance
+PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 
 -- ── Table: documents ─────────────────────────────────────────────────────────
--- One record per upload. Created when file is saved; status updated by pipeline.
 
 CREATE TABLE IF NOT EXISTS documents (
-    id              TEXT        NOT NULL PRIMARY KEY,   -- UUID4 generated in Python
-    filename_orig   TEXT        NOT NULL,               -- original name from user
-    filename_stored TEXT        NOT NULL,               -- UUID-renamed name on disk
-    file_ext        TEXT        NOT NULL,               -- jpg | png | pdf
+    id              TEXT        NOT NULL PRIMARY KEY,
+    filename_orig   TEXT        NOT NULL,
+    filename_stored TEXT        NOT NULL,
+    file_ext        TEXT        NOT NULL,
     file_size_bytes INTEGER     NOT NULL,
-    mime_type       TEXT        NOT NULL,               -- validated by python-magic
-    uploaded_at     TEXT        NOT NULL,               -- UTC ISO-8601 string
-    status          TEXT        NOT NULL                -- pending|processing|complete|error
+    mime_type       TEXT        NOT NULL,
+    uploaded_at     TEXT        NOT NULL,
+    status          TEXT        NOT NULL
                     CHECK (status IN ('pending','processing','complete','error'))
 );
 
 -- ── Table: analysis_results ──────────────────────────────────────────────────
--- One record per completed (or failed) analysis. FK → documents.
 
 CREATE TABLE IF NOT EXISTS analysis_results (
-    id                  TEXT    NOT NULL PRIMARY KEY,   -- UUID4
+    id                  TEXT    NOT NULL PRIMARY KEY,
     document_id         TEXT    NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    verdict             TEXT    NOT NULL                -- authentic|forged|unknown
+    verdict             TEXT    NOT NULL
                         CHECK (verdict IN ('authentic','forged','unknown')),
-    confidence          REAL    NOT NULL,               -- 0.0 – 1.0 decimal
-    detections          TEXT,                           -- JSON array (see TRD §4.4)
-    annotated_image     TEXT,                           -- relative path in results/
-    ocr_text            TEXT,                           -- full Tesseract string
-    processing_ms       INTEGER,                        -- wall-clock pipeline time (ms)
-    model_version       TEXT,                           -- semver e.g. '1.0.0'
-    analysed_at         TEXT    NOT NULL,               -- UTC ISO-8601 string
-    error_message       TEXT                            -- populated only when status=error
+    confidence          REAL    NOT NULL,
+    detections          TEXT,                   -- JSON array
+    annotated_image     TEXT,                   -- best page heatmap filename
+    ocr_text            TEXT,
+    processing_ms       INTEGER,
+    model_version       TEXT,
+    analysed_at         TEXT    NOT NULL,
+    error_message       TEXT,
+    -- ── Multi-page fields ─────────────────────────────────────────────────
+    total_pages         INTEGER DEFAULT 1,      -- total pages in document
+    pages_summary       TEXT,                   -- JSON array of per-page results
+    forged_pages        TEXT                    -- JSON array of forged page numbers
 );
 
--- ── Table: users (stub for V2 auth — unused in V1) ───────────────────────────
+-- ── Table: users (stub for V2) ────────────────────────────────────────────────
+
 CREATE TABLE IF NOT EXISTS users (
     id              TEXT    NOT NULL PRIMARY KEY,
     email           TEXT    NOT NULL UNIQUE,
@@ -47,11 +50,18 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ── Indexes ───────────────────────────────────────────────────────────────────
+
 CREATE INDEX IF NOT EXISTS idx_documents_uploaded_at
-    ON documents (uploaded_at DESC);                    
+    ON documents (uploaded_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_results_document_id
-    ON analysis_results (document_id);                 
+    ON analysis_results (document_id);
 
 CREATE INDEX IF NOT EXISTS idx_results_verdict
-    ON analysis_results (verdict);                      
+    ON analysis_results (verdict);
+
+-- ── Migration: add multi-page columns if upgrading from v1.0 ─────────────────
+-- These are safe to run on existing databases — ignored if columns already exist
+
+-- SQLite doesn't support IF NOT EXISTS for columns,
+-- so we use a workaround via a separate migration check in adapter.py

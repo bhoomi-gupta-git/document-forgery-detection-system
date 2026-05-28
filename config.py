@@ -40,11 +40,11 @@ PDF_DPI     = 200
 
 # ── ML / Aggregator Configuration ──────────────────────────────────
 MODEL_CONFIG = {
-    "threshold": 0.40,
+    "threshold": 0.25,
     "weights": {
-        "cnn": 0.60,
-        "ela": 0.25,
-        "ocr": 0.15,
+        "cnn": 0.40,
+        "ela": 0.50,
+        "ocr": 0.10,
     }
 }
 

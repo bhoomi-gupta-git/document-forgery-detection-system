@@ -1,8 +1,6 @@
 """
 db/adapter.py — SQLite connection factory + CRUD helpers.
-
-All database interaction in DocForge goes through this module.
-Uses parameterised queries exclusively — no string formatting with user input.
+Updated for multi-page PDF support — stores pages_summary as JSON.
 """
 
 import json
@@ -19,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def get_db():
-    """Yield a sqlite3 connection with Row factory and FK enforcement."""
     conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
@@ -34,10 +31,9 @@ def get_db():
         conn.close()
 
 
-# ── Schema initialisation ─────────────────────────────────────────────────────
+# ── Schema init ───────────────────────────────────────────────────────────────
 
 def init_db():
-    """Create tables and indexes from schema.sql. Safe to call on every startup."""
     try:
         with open(config.SCHEMA_PATH, 'r') as f:
             schema = f.read()
@@ -45,19 +41,13 @@ def init_db():
             conn.executescript(schema)
         logger.info("Database schema initialised at %s", config.DB_PATH)
     except Exception as exc:
-        logger.error("Failed to initialise database schema: %s", exc)
+        logger.error("Failed to initialise schema: %s", exc)
         raise
 
 
 # ── documents CRUD ────────────────────────────────────────────────────────────
 
 def insert_document(doc: dict) -> None:
-    """
-    Insert a new document record with status='pending'.
-
-    Expected keys: id, filename_orig, filename_stored, file_ext,
-                   file_size_bytes, mime_type, uploaded_at, status
-    """
     sql = """
         INSERT INTO documents
             (id, filename_orig, filename_stored, file_ext,
@@ -68,67 +58,67 @@ def insert_document(doc: dict) -> None:
     """
     with get_db() as conn:
         conn.execute(sql, doc)
-    logger.info("Inserted document record id=%s status=%s", doc['id'], doc['status'])
+    logger.info("Inserted document id=%s status=%s", doc['id'], doc['status'])
 
 
 def update_document_status(document_id: str, status: str) -> None:
-    """Update the status column for a document. Valid values: pending|processing|complete|error."""
     with get_db() as conn:
         conn.execute(
             "UPDATE documents SET status = ? WHERE id = ?",
             (status, document_id)
         )
-    logger.info("Document id=%s status → %s", document_id, status)
+    logger.info("Document id=%s → status=%s", document_id, status)
 
 
 def get_document(document_id: str) -> sqlite3.Row | None:
-    """Return a single documents row or None."""
     with get_db() as conn:
-        row = conn.execute(
+        return conn.execute(
             "SELECT * FROM documents WHERE id = ?", (document_id,)
         ).fetchone()
-    return row
 
 
 # ── analysis_results CRUD ─────────────────────────────────────────────────────
 
 def insert_result(result: dict) -> None:
     """
-    Insert a completed analysis result.
-
-    Expected keys: id, document_id, verdict, confidence, detections (list|None),
-                   annotated_image, ocr_text, processing_ms, model_version,
-                   analysed_at, error_message
+    Insert analysis result. Handles multi-page fields:
+    - detections:     list → JSON string
+    - pages_summary:  list → JSON string
+    - forged_pages:   list → JSON string
     """
-    # Serialise detections list → JSON string for storage
-    detections_json = json.dumps(result.get('detections') or [])
+    detections_json    = json.dumps(result.get('detections') or [])
+    pages_summary_json = json.dumps(result.get('pages_summary') or [])
+    forged_pages_json  = json.dumps(result.get('forged_pages') or [])
 
     sql = """
         INSERT INTO analysis_results
             (id, document_id, verdict, confidence, detections,
              annotated_image, ocr_text, processing_ms, model_version,
-             analysed_at, error_message)
+             analysed_at, error_message, total_pages, pages_summary, forged_pages)
         VALUES
             (:id, :document_id, :verdict, :confidence, :detections,
              :annotated_image, :ocr_text, :processing_ms, :model_version,
-             :analysed_at, :error_message)
+             :analysed_at, :error_message, :total_pages, :pages_summary, :forged_pages)
     """
     payload = dict(result)
-    payload['detections'] = detections_json
+    payload['detections']     = detections_json
+    payload['pages_summary']  = pages_summary_json
+    payload['forged_pages']   = forged_pages_json
+    payload.setdefault('total_pages', 1)
+    payload.setdefault('error_message', None)
 
     with get_db() as conn:
         conn.execute(sql, payload)
+
     logger.info(
-        "Inserted result id=%s document_id=%s verdict=%s confidence=%.2f",
-        result['id'], result['document_id'], result['verdict'], result['confidence']
+        "Inserted result id=%s document_id=%s verdict=%s pages=%d",
+        result['id'], result['document_id'],
+        result['verdict'], result.get('total_pages', 1)
     )
 
 
 def get_result(document_id: str) -> dict | None:
-    """
-    Return a combined document + analysis_result dict for a given document UUID,
-    or None if not found.
-    """
+    """Return combined document + analysis_result dict."""
     sql = """
         SELECT
             d.id              AS document_id,
@@ -148,7 +138,10 @@ def get_result(document_id: str) -> dict | None:
             r.processing_ms,
             r.model_version,
             r.analysed_at,
-            r.error_message
+            r.error_message,
+            r.total_pages,
+            r.pages_summary,
+            r.forged_pages
         FROM documents d
         LEFT JOIN analysis_results r ON r.document_id = d.id
         WHERE d.id = ?
@@ -160,9 +153,19 @@ def get_result(document_id: str) -> dict | None:
         return None
 
     data = dict(row)
-    # Deserialise detections JSON string → Python list
-    raw_detections = data.get('detections')
-    data['detections'] = json.loads(raw_detections) if raw_detections else []
+
+    # Deserialise JSON fields
+    for field in ('detections', 'pages_summary', 'forged_pages'):
+        raw = data.get(field)
+        if raw:
+            try:
+                data[field] = json.loads(raw)
+            except (json.JSONDecodeError, TypeError):
+                data[field] = []
+        else:
+            data[field] = []
+
+    data.setdefault('total_pages', 1)
     return data
 
 
@@ -174,15 +177,10 @@ def get_history(
     direction: str = 'desc',
     search: str | None = None,
 ) -> dict:
-    """
-    Return a paginated history list.
-
-    Returns: {page, limit, total, items: [...]}
-    """
+    """Return paginated history list."""
     limit  = min(limit, config.HISTORY_PAGE_LIMIT_MAX)
     offset = (page - 1) * limit
 
-    # Validate sort column against whitelist to prevent injection
     sort_col_map = {
         'date':       'd.uploaded_at',
         'filename':   'd.filename_orig',
@@ -192,9 +190,8 @@ def get_history(
     sort_col = sort_col_map.get(sort, 'd.uploaded_at')
     sort_dir = 'DESC' if direction.lower() == 'desc' else 'ASC'
 
-    # Build WHERE clauses
     where_clauses = []
-    params: list = []
+    params: list  = []
 
     if verdict and verdict in ('authentic', 'forged'):
         where_clauses.append("r.verdict = ?")
@@ -221,7 +218,8 @@ def get_history(
             d.status,
             r.id              AS result_id,
             r.verdict,
-            r.confidence
+            r.confidence,
+            r.total_pages
         {base_sql}
         ORDER BY {sort_col} {sort_dir}
         LIMIT ? OFFSET ?

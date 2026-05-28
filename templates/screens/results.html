@@ -6,6 +6,98 @@
 
 {% block screen_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/screens/results.css') }}" />
+<style>
+    /* ── Multi-page tabs ───────────────────────────────── */
+    .page-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: var(--sp-3);
+        border-bottom: 2px solid var(--rule);
+        padding-bottom: var(--sp-2);
+    }
+
+    .page-tab {
+        padding: 6px 16px;
+        border: 1px solid var(--rule);
+        border-radius: var(--r-pill);
+        background: var(--white);
+        font-size: var(--text-sm);
+        font-weight: 500;
+        cursor: pointer;
+        color: var(--muted);
+        transition: all var(--transition-fast);
+        position: relative;
+    }
+
+    .page-tab:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .page-tab--active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--white);
+    }
+
+    .page-tab--forged {
+        border-color: var(--warn);
+        color: var(--warn);
+    }
+
+    .page-tab--forged.page-tab--active {
+        background: var(--warn);
+        border-color: var(--warn);
+        color: var(--white);
+    }
+
+    .page-tab__badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--warn);
+        color: var(--white);
+        font-size: 10px;
+        font-weight: 700;
+        margin-left: 4px;
+    }
+
+    .page-panel {
+        display: none;
+    }
+
+    .page-panel--active {
+        display: block;
+    }
+
+    .page-summary-bar {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-2);
+        flex-wrap: wrap;
+        background: var(--ghost);
+        border: 1px solid var(--rule);
+        border-radius: var(--r-lg);
+        padding: var(--sp-2) var(--sp-3);
+        margin-bottom: var(--sp-3);
+        font-size: var(--text-sm);
+    }
+
+    .page-summary-bar__item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+    }
+
+    .page-summary-bar__item strong {
+        color: var(--ink);
+    }
+</style>
 {% endblock %}
 
 {% block body_class %}page-wrapper page-wrapper--with-actionbar{% endblock %}
@@ -13,112 +105,275 @@
 {% block content %}
 <div class="results-screen container">
 
-    <!-- Verdict banner -->
+    <!-- Overall Verdict Banner -->
     {{ verdict_banner(verdict=verdict, confidence_pct=confidence_pct, saved_label=False) }}
 
-    <!-- Image comparison -->
-    <div class="img-comparison" aria-label="Document comparison">
-
-        <!-- Original -->
-        <div class="img-comparison__panel" {% if original_url %}data-lightbox="{{ original_url }}" {% endif %}
-            role="button" tabindex="0" aria-label="View original image full size">
-            <img src="{{ original_url }}" alt="Original uploaded document" loading="lazy" />
-            <div class="img-comparison__caption">Original Upload</div>
-        </div>
-
-        <!-- Annotated heatmap -->
-        <div id="annotated-panel" class="img-comparison__panel" {% if annotated_url
-            %}data-lightbox="{{ annotated_url }}" {% endif %} role="button" tabindex="0"
-            aria-label="View detected regions full size">
-            {% if annotated_url %}
-            <img src="{{ annotated_url }}" alt="Document with detected forgery regions highlighted" loading="lazy" />
-            {% else %}
-            <div class="img-comparison__placeholder">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                    aria-hidden="true" style="color:var(--rule)">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <path d="m3 9 4-4 4 4 4-4 4 4" />
-                </svg>
-                <span class="text-xs text-muted">Overlay image unavailable</span>
-            </div>
-            {% endif %}
-            <div class="img-comparison__caption">Detected Regions</div>
-        </div>
-    </div>
-
-    <!-- Multi-page PDF info banner -->
-    {% if filename_orig and filename_orig.lower().endswith('.pdf') %}
-    <div class="toast toast--info toast--visible" role="status" style="margin-bottom:var(--sp-3)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-            aria-hidden="true">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        Only page 1 was analysed. Multi-page support is coming in V2.
-    </div>
-    {% endif %}
-
-    <!-- Forgery breakdown -->
-    <div class="forgery-list" role="region" aria-label="Forgery analysis breakdown">
-        <div class="forgery-list__header">Forgery Analysis Breakdown</div>
-
-        {% if detections %}
-        {% for det in detections %}
-        <div class="forgery-list__row">
-            <svg class="forgery-list__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    <!-- Multi-page summary bar (only for PDFs with multiple pages) -->
+    {% if total_pages > 1 %}
+    <div class="page-summary-bar" role="status">
+        <div class="page-summary-bar__item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 aria-hidden="true">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <strong>{{ total_pages }}</strong> pages analysed
+        </div>
+        {% if forged_pages %}
+        <div class="page-summary-bar__item" style="color:var(--warn)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                aria-hidden="true">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0
+                 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <div class="forgery-list__info">
-                <div class="forgery-list__type">
-                    {{ det.type | replace('_', ' ') | title }}
-                </div>
-                {% if det.description %}
-                <div class="forgery-list__desc">{{ det.description }}</div>
-                {% endif %}
-                <!-- Tooltip on hover -->
-                <div class="forgery-list__tooltip">{{ det.description or '' }}</div>
-            </div>
-            {% set conf_pct = (det.confidence * 100) | int %}
-            {% if conf_pct >= 80 %}
-            <span class="badge badge--red badge--md">{{ conf_pct }}% conf</span>
-            {% elif conf_pct >= 60 %}
-            <span class="badge badge--amber badge--md">{{ conf_pct }}% conf</span>
-            {% else %}
-            <span class="badge badge--neutral badge--md">{{ conf_pct }}% conf</span>
-            {% endif %}
+            <strong style="color:var(--warn)">
+                {{ forged_pages | length }} page{{ 's' if forged_pages | length > 1 }}
+                flagged as forged:
+                Page{{ 's' if forged_pages | length > 1 }} {{ forged_pages | join(', ') }}
+            </strong>
         </div>
-        {% endfor %}
         {% else %}
-        <div class="forgery-list__empty" role="status">
-            ✓ No specific forgery patterns detected.
+        <div class="page-summary-bar__item" style="color:var(--success)">
+            ✓ No forgery detected on any page
         </div>
         {% endif %}
     </div>
 
+    <!-- Page Tabs -->
+    {% if pages_summary %}
+    <div class="page-tabs" role="tablist" aria-label="Document pages">
+        <!-- "All Pages" tab -->
+        <button class="page-tab page-tab--active" role="tab" aria-selected="true" data-tab="all"
+            onclick="switchTab('all', this)">
+            All Pages
+        </button>
+        {% for page in pages_summary %}
+        <button class="page-tab {% if page.verdict == 'forged' %}page-tab--forged{% endif %}" role="tab"
+            aria-selected="false" data-tab="page-{{ page.page_number }}"
+            onclick="switchTab('page-{{ page.page_number }}', this)">
+            Page {{ page.page_number }}
+            {% if page.verdict == 'forged' %}
+            <span class="page-tab__badge" aria-label="Forged">!</span>
+            {% endif %}
+        </button>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% endif %}{# end if total_pages > 1 #}
+
+    <!-- ── ALL PAGES / SINGLE IMAGE VIEW ───────────────────────────────── -->
+    <div id="panel-all" class="page-panel page-panel--active">
+
+        {% if pages_summary and total_pages > 1 %}
+        <!-- Grid of all page thumbnails -->
+        <div
+            style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-3);margin-bottom:var(--sp-4)">
+            {% for page in pages_summary %}
+            <div style="border:1px solid var(--rule);border-radius:var(--r-lg);overflow:hidden;background:var(--white)">
+                <!-- Page header -->
+                <div
+                    style="padding:var(--sp-1) var(--sp-2);background:var(--ghost);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--rule)">
+                    <span style="font-size:var(--text-sm);font-weight:600">Page {{ page.page_number }}</span>
+                    {% if page.verdict == 'forged' %}
+                    <span class="badge badge--red badge--sm">Forged {{ page.confidence_pct }}%</span>
+                    {% elif page.verdict == 'authentic' %}
+                    <span class="badge badge--green badge--sm">Authentic {{ page.confidence_pct }}%</span>
+                    {% else %}
+                    <span class="badge badge--neutral badge--sm">Unknown</span>
+                    {% endif %}
+                </div>
+                <!-- Images -->
+                <div style="display:grid;grid-template-columns:1fr 1fr">
+                    <div style="padding:var(--sp-1);border-right:1px solid var(--rule)">
+                        {% if page.original_url %}
+                        <img src="{{ page.original_url }}" alt="Page {{ page.page_number }} original"
+                            style="width:100%;height:120px;object-fit:contain;background:var(--ghost)" loading="lazy" />
+                        {% else %}
+                        <div
+                            style="width:100%;height:120px;background:var(--ghost);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:var(--text-xs)">
+                            No image</div>
+                        {% endif %}
+                        <div style="font-size:10px;color:var(--muted);text-align:center;padding:2px">Original</div>
+                    </div>
+                    <div style="padding:var(--sp-1)">
+                        {% if page.heatmap_url %}
+                        <img src="{{ page.heatmap_url }}" alt="Page {{ page.page_number }} heatmap"
+                            style="width:100%;height:120px;object-fit:contain;background:var(--ghost)" loading="lazy" />
+                        {% else %}
+                        <div
+                            style="width:100%;height:120px;background:var(--ghost);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:var(--text-xs)">
+                            No heatmap</div>
+                        {% endif %}
+                        <div style="font-size:10px;color:var(--muted);text-align:center;padding:2px">Detected</div>
+                    </div>
+                </div>
+                <!-- View detail button -->
+                <div style="padding:var(--sp-1) var(--sp-2);text-align:center">
+                    <button
+                        onclick="switchTab('page-{{ page.page_number }}', document.querySelector('[data-tab=\'page-{{ page.page_number }}\']'))"
+                        style="font-size:var(--text-xs);color:var(--accent);background:none;border:none;cursor:pointer;text-decoration:underline">
+                        View detail →
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- Single image — original layout -->
+        <div class="img-comparison">
+            <div class="img-comparison__panel" {% if original_url %}data-lightbox="{{ original_url }}" {% endif %}
+                role="button" tabindex="0" aria-label="View original full size">
+                <img src="{{ original_url }}" alt="Original uploaded document" loading="lazy" />
+                <div class="img-comparison__caption">Original Upload</div>
+            </div>
+
+            <div id="annotated-panel" class="img-comparison__panel" {% if annotated_url
+                %}data-lightbox="{{ annotated_url }}" {% endif %} role="button" tabindex="0"
+                aria-label="View detected regions full size">
+                {% if annotated_url %}
+                <img src="{{ annotated_url }}" alt="Detected regions" loading="lazy" />
+                {% else %}
+                <div class="img-comparison__placeholder">
+                    <span class="text-xs text-muted">Overlay image unavailable</span>
+                </div>
+                {% endif %}
+                <div class="img-comparison__caption">Detected Regions</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Overall forgery breakdown -->
+        <div class="forgery-list">
+            <div class="forgery-list__header">Forgery Analysis Breakdown</div>
+            {% if detections %}
+            {% for det in detections %}
+            <div class="forgery-list__row">
+                <svg class="forgery-list__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    aria-hidden="true">
+                    <path
+                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <div class="forgery-list__info">
+                    <div class="forgery-list__type">
+                        {{ det.type | replace('_', ' ') | title }}
+                        {% if det.page is defined %}
+                        <span style="font-size:var(--text-xs);color:var(--muted);font-weight:400">
+                            — Page {{ det.page }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if det.description %}
+                    <div class="forgery-list__desc">{{ det.description }}</div>
+                    {% endif %}
+                </div>
+                {% set conf_pct = (det.confidence * 100) | int %}
+                {% if conf_pct >= 80 %}
+                <span class="badge badge--red badge--md">{{ conf_pct }}% conf</span>
+                {% elif conf_pct >= 60 %}
+                <span class="badge badge--amber badge--md">{{ conf_pct }}% conf</span>
+                {% else %}
+                <span class="badge badge--neutral badge--md">{{ conf_pct }}% conf</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="forgery-list__empty">✓ No specific forgery patterns detected.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── PER-PAGE PANELS ──────────────────────────────────────────────── -->
+    {% for page in pages_summary %}
+    <div id="panel-page-{{ page.page_number }}" class="page-panel">
+
+        <!-- Page verdict mini-banner -->
+        <div class="verdict-banner verdict-banner--{{ page.verdict }}"
+            style="min-height:56px;margin-bottom:var(--sp-3)">
+            <div class="verdict-banner__left">
+                <div class="verdict-banner__title" style="font-size:var(--text-lg)">
+                    Page {{ page.page_number }} —
+                    {{ 'Authentic' if page.verdict == 'authentic' else ('Potentially Forged' if page.verdict == 'forged'
+                    else 'Inconclusive') }}
+                </div>
+            </div>
+            <div class="verdict-banner__confidence" style="font-size:var(--text-lg)">
+                {{ page.confidence_pct }}%
+            </div>
+        </div>
+
+        <!-- Page images -->
+        <div class="img-comparison">
+            <div class="img-comparison__panel" {% if page.original_url %}data-lightbox="{{ page.original_url }}" {%
+                endif %} role="button" tabindex="0">
+                {% if page.original_url %}
+                <img src="{{ page.original_url }}" alt="Page {{ page.page_number }} original" loading="lazy" />
+                {% else %}
+                <div class="img-comparison__placeholder">
+                    <span class="text-xs text-muted">Image unavailable</span>
+                </div>
+                {% endif %}
+                <div class="img-comparison__caption">Page {{ page.page_number }} — Original</div>
+            </div>
+
+            <div class="img-comparison__panel" {% if page.heatmap_url %}data-lightbox="{{ page.heatmap_url }}" {% endif
+                %} role="button" tabindex="0">
+                {% if page.heatmap_url %}
+                <img src="{{ page.heatmap_url }}" alt="Page {{ page.page_number }} heatmap" loading="lazy" />
+                {% else %}
+                <div class="img-comparison__placeholder">
+                    <span class="text-xs text-muted">Overlay unavailable</span>
+                </div>
+                {% endif %}
+                <div class="img-comparison__caption">Page {{ page.page_number }} — Detected Regions</div>
+            </div>
+        </div>
+
+        <!-- Page detections -->
+        <div class="forgery-list">
+            <div class="forgery-list__header">Page {{ page.page_number }} — Forgery Breakdown</div>
+            {% if page.detections %}
+            {% for det in page.detections %}
+            <div class="forgery-list__row">
+                <div class="forgery-list__info">
+                    <div class="forgery-list__type">{{ det.type | replace('_', ' ') | title }}</div>
+                    {% if det.description %}
+                    <div class="forgery-list__desc">{{ det.description }}</div>
+                    {% endif %}
+                </div>
+                {% set cp = (det.confidence * 100) | int %}
+                <span
+                    class="badge {% if cp >= 80 %}badge--red{% elif cp >= 60 %}badge--amber{% else %}badge--neutral{% endif %} badge--md">
+                    {{ cp }}% conf
+                </span>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="forgery-list__empty">✓ No forgery detected on this page.</div>
+            {% endif %}
+        </div>
+
+    </div>
+    {% endfor %}
+
     <!-- Meta footer -->
-    <div class="meta-footer" aria-label="Analysis metadata">
+    <div class="meta-footer">
         {% if filename_orig %}
-        <span class="meta-footer__item font-mono">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                aria-hidden="true">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            </svg>
-            {{ filename_orig }}
-        </span>
+        <span class="meta-footer__item font-mono">{{ filename_orig }}</span>
+        {% endif %}
+        {% if total_pages > 1 %}
+        <span class="meta-footer__item">{{ total_pages }} pages</span>
         {% endif %}
         {% if uploaded_at %}
-        <span class="meta-footer__item">
-            Uploaded {{ uploaded_at[:16] | replace('T', ' ') }} UTC
-        </span>
+        <span class="meta-footer__item">Uploaded {{ uploaded_at[:16] | replace('T', ' ') }} UTC</span>
         {% endif %}
         {% if processing_ms %}
-        <span class="meta-footer__item">
-            Analysis: {{ "%.1f" | format(processing_ms / 1000) }}s
-        </span>
+        <span class="meta-footer__item">Analysis: {{ "%.1f" | format(processing_ms / 1000) }}s</span>
         {% endif %}
     </div>
 
@@ -136,14 +391,33 @@ secondary_href='/history'
 {% endblock %}
 
 {% block lightbox %}
-<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
-    <img id="lightbox-img" class="lightbox__img" src="" alt="Full size document view" />
-    <button id="lightbox-close" class="lightbox__close" type="button" aria-label="Close image viewer">
-        ✕
-    </button>
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true">
+    <img id="lightbox-img" class="lightbox__img" src="" alt="Full size view" />
+    <button id="lightbox-close" class="lightbox__close" type="button" aria-label="Close">✕</button>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/results.js') }}" defer></script>
+<script>
+    function switchTab(tabId, clickedBtn) {
+        // Hide all panels
+        document.querySelectorAll('.page-panel').forEach(p => {
+            p.classList.remove('page-panel--active');
+        });
+        // Deactivate all tabs
+        document.querySelectorAll('.page-tab').forEach(t => {
+            t.classList.remove('page-tab--active');
+            t.setAttribute('aria-selected', 'false');
+        });
+        // Show selected panel
+        const panel = document.getElementById('panel-' + tabId);
+        if (panel) panel.classList.add('page-panel--active');
+        // Activate clicked tab
+        if (clickedBtn) {
+            clickedBtn.classList.add('page-tab--active');
+            clickedBtn.setAttribute('aria-selected', 'true');
+        }
+    }
+</script>
 {% endblock %}
