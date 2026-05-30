@@ -35,15 +35,15 @@ MODEL_INPUT_SIZE = (224, 224)
 MIN_IMAGE_SIZE   = 100
 
 ELA_QUALITY = 75
-ELA_AMPLIFY = 10
+ELA_AMPLIFY = 8
 PDF_DPI     = 200
 
 # ── ML / Aggregator Configuration ──────────────────────────────────
 MODEL_CONFIG = {
-    "threshold": 0.25,
+    "threshold": 0.38,
     "weights": {
-        "cnn": 0.40,
-        "ela": 0.50,
+        "cnn": 0.50,
+        "ela": 0.40,
         "ocr": 0.10,
     }
 }
