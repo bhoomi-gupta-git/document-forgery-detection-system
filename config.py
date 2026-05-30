@@ -62,6 +62,7 @@ ALLOW_MOCK_MODEL = True   # if False → fail when model missing
 # ── OCR (Cross-platform safe) ──────────────────────────────────────
 TESSERACT_CMD = shutil.which("tesseract")
 POPPLER_PATH = shutil.which("pdftoppm")
+OCR_MIN_CONFIDENCE = 50   # filter out low-confidence words
 
 # ── Analysis Timeout ───────────────────────────────────────────────
 ANALYSIS_TIMEOUT_S = 15   # NOTE: must be enforced in backend, not just config
